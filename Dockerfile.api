@@ -1,0 +1,20 @@
+#https://stackoverflow.com/questions/55206172/how-to-run-dotnet-core-app-with-selenium-in-docker
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim AS base
+WORKDIR /app
+EXPOSE 80
+
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
+WORKDIR /src
+COPY ["Comic.Api/Comic.Api.csproj", "Comic.Api/"]
+RUN dotnet restore "Comic.Api/Comic.Api.csproj"
+COPY . .
+WORKDIR "/src/Comic.Api"
+RUN dotnet build "Comic.Api.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "Comic.Api.csproj" -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "Comic.Api.dll"]
